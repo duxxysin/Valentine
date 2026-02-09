@@ -1,0 +1,5 @@
+Please add your audio files here if desired:
+- romantic.mp3  -> background music played after Yes
+- envelope.mp3  -> envelope open sound
+
+Place them in: src/assets/  (and update paths in code if necessary)
