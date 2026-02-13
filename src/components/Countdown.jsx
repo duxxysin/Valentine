@@ -35,7 +35,7 @@ export default function CountdownPage({ onBack, onReached }) {
     if (t.days > 3) setMessage(`${t.days} days until the magic 💫`)
     else if (t.days === 3) setMessage('Only 3 days left until the magic 💖')
     else if (t.days === 1) setMessage("Tomorrow is the day! 💕")
-    else if (t.hours <= 1 && t.days === 0) setMessage('1 hour left… get ready!')
+    else if (t.days === 0 && t.hours > 0) setMessage(`${t.hours} hour${t.hours > 1 ? 's' : ''} left… get ready!`)
     else setMessage('Counting down…')
   }
 
