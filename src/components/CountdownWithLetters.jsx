@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import '../App.css'
+import movieNightPoster from '../assets/MovieNightPost.png'
+import anniversaryImg from '../assets/Anniversary.png'
+import valentineVideo from '../assets/Valentine.mp4'
 
 function getTimeUntilValentine() {
   const now = new Date()
@@ -14,13 +17,36 @@ function getTimeUntilValentine() {
   return { days, hours, minutes, seconds, diff }
 }
 
+function getTimeUntilPlanEnd() {
+  const now = new Date()
+  let year = now.getFullYear()
+  const planStart = new Date(year, 1, 14, 17, 0, 0) // Feb 14 17:00 (5 PM)
+  if (now > planStart) planStart.setFullYear(year + 1)
+  const diff = planStart - now
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+  const hours = Math.floor((diff / (1000 * 60 * 60)) % 24)
+  const minutes = Math.floor((diff / (1000 * 60)) % 60)
+  const seconds = Math.floor((diff / 1000) % 60)
+  return { days, hours, minutes, seconds, diff }
+}
+
+function isPlanAvailable() {
+  const now = new Date()
+  const planAvailableTime = new Date(now.getFullYear(), 1, 14, 10, 0, 0) // Feb 14 10:00 AM
+  return now >= planAvailableTime
+}
+
 export default function CountdownWithLetters({ onBack }) {
   const [time, setTime] = useState(getTimeUntilValentine())
+  const [planTime, setPlanTime] = useState(getTimeUntilPlanEnd())
   const [message, setMessage] = useState('')
   const [opened, setOpened] = useState([false, false])
   const [unlocked, setUnlocked] = useState(false)
   const [showCelebration, setShowCelebration] = useState(false)
   const [fireworks, setFireworks] = useState([])
+  const [showPlanModal, setShowPlanModal] = useState(false)
+  const [planAvailable, setPlanAvailable] = useState(() => isPlanAvailable())
+  const audioRef = React.useRef(null)
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -31,8 +57,48 @@ export default function CountdownWithLetters({ onBack }) {
         setUnlocked(true)
         clearInterval(id)
       }
+      setPlanAvailable(isPlanAvailable())
     }, 1000)
     return () => clearInterval(id)
+  }, [])
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      const pt = getTimeUntilPlanEnd()
+      setPlanTime(pt)
+    }, 1000)
+    return () => clearInterval(id)
+  }, [])
+
+  // Background Music
+  useEffect(() => {
+    const audio = audioRef.current
+    if (audio) {
+      audio.volume = 0.3
+      audio.loop = true
+      // Try to play with user interaction
+      const playAudio = () => {
+        audio.play().catch(err => {
+          // Browser autoplay policy - user needs to interact first
+          console.log('Audio autoplay blocked, awaiting user interaction')
+        })
+      }
+      playAudio()
+      // Also try on first user interaction
+      const handleUserInteraction = () => {
+        if (audio.paused) {
+          audio.play()
+        }
+        document.removeEventListener('click', handleUserInteraction)
+        document.removeEventListener('keydown', handleUserInteraction)
+      }
+      document.addEventListener('click', handleUserInteraction)
+      document.addEventListener('keydown', handleUserInteraction)
+      return () => {
+        document.removeEventListener('click', handleUserInteraction)
+        document.removeEventListener('keydown', handleUserInteraction)
+      }
+    }
   }, [])
 
   useEffect(() => {
@@ -51,7 +117,7 @@ export default function CountdownWithLetters({ onBack }) {
     if (unlocked) {
       // show celebration overlay when letters unlock (Feb 14 or preview)
       setShowCelebration(true)
-      // trigger continuous waves of fireworks over 10 seconds
+      // trigger continuous waves of fireworks over shorter period
       const burstPositions = [
         { x: 10, y: 15 },
         { x: 30, y: 10 },
@@ -64,8 +130,8 @@ export default function CountdownWithLetters({ onBack }) {
       ]
       const newFireworks = []
       
-      // trigger bursts every 1.5s for 20 seconds (13 waves)
-      for (let wave = 0; wave < 13; wave++) {
+      // trigger bursts every 1.1s for 10 seconds (9 waves)
+      for (let wave = 0; wave < 9; wave++) {
         setTimeout(() => {
           burstPositions.forEach((pos, idx) => {
             setTimeout(() => {
@@ -73,10 +139,10 @@ export default function CountdownWithLetters({ onBack }) {
               setFireworks([...newFireworks])
             }, idx * 150)
           })
-        }, wave * 1500)
+        }, wave * 1100)
       }
-      // auto-hide celebration message after 7s, but keep fireworks floating
-      const t = setTimeout(() => setShowCelebration(false), 7000)
+      // auto-hide celebration message after 4s
+      const t = setTimeout(() => setShowCelebration(false), 4000)
       return () => clearTimeout(t)
     }
     return undefined
@@ -101,6 +167,18 @@ export default function CountdownWithLetters({ onBack }) {
 
   return (
     <section className="page countdown-with-letters">
+      {/* Movie Night Teaser Section */}
+      <div className="movie-night-teaser">
+        <div className="teaser-poster">
+          <img src={movieNightPoster} alt="Movie Night Cooldown" className="poster-img" />
+          <div className="teaser-overlay">
+            <h2>Join us for Movie Night! 🎬</h2>
+            <p className="teaser-date">13 February | 9:30 PM</p>
+            <p className="teaser-location">Discord - Kuromi lovers St, Maryland</p>
+          </div>
+        </div>
+      </div>
+
       {/* Countdown Section */}
       <div className="countdown-section">
         <h2 className="count-title">hihihihihi katkoutiiii said yessssss letsgoooooooooo 💖</h2>
@@ -127,6 +205,99 @@ export default function CountdownWithLetters({ onBack }) {
         </div>
         <div className="fun-message">{message}</div>
       </div>
+
+      {/* Posts Section - Anniversary & Valentine (show only after countdown ends) */}
+      {unlocked && (
+      <div className="posts-section">
+        <div className="post-image-card post-left">
+          <img src={anniversaryImg} alt="Happy Anniversary" className="post-img" />
+        </div>
+
+        <div className="post-video-card post-right">
+          <video 
+            src={valentineVideo} 
+            alt="Happy Valentine's Day" 
+            className="post-video"
+            controls
+            autoPlay
+            loop
+            muted
+          />
+        </div>
+      </div>
+      )}
+
+      {/* Plan Button (show only after Feb 14 10:00 AM) */}
+      {unlocked && planAvailable && (
+      <div className="plan-section">
+        <button className="btn primary plan-btn" onClick={() => setShowPlanModal(true)}>
+          ✨ Our Plan – February 14 ✨
+        </button>
+      </div>
+      )}
+
+      {showPlanModal && (
+        <div className="plan-modal-overlay" onClick={() => setShowPlanModal(false)}>
+          <div className="plan-modal" onClick={e => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setShowPlanModal(false)}>✕</button>
+            
+            <h2 className="plan-title">Our Plan – February 14</h2>
+            <p className="plan-subtitle">Be ready at 17:00 ✨</p>
+            
+            <div className="timeline">
+              <div className="timeline-item">
+                <div className="timeline-time">17:00</div>
+                <div className="timeline-activity">
+                  <h4>Meet Up</h4>
+                  <p>Get together & start the celebration 💕</p>
+                </div>
+              </div>
+
+              <div className="timeline-item">
+                <div className="timeline-time">18:00</div>
+                <div className="timeline-activity">
+                  <h4>Dinner</h4>
+                  <p>Share a beautiful dinner together 🍽️</p>
+                </div>
+              </div>
+
+              <div className="timeline-item">
+                <div className="timeline-time">20:00</div>
+                <div className="timeline-activity">
+                  <h4>Movie & Relaxation</h4>
+                  <p>Watch your favorite movie or just talk 🎬</p>
+                </div>
+              </div>
+
+              <div className="timeline-item">
+                <div className="timeline-time">22:00</div>
+                <div className="timeline-activity">
+                  <h4>Stargazing & Cuddles</h4>
+                  <p>Enjoy the night sky together ✨</p>
+                </div>
+              </div>
+
+              <div className="timeline-item">
+                <div className="timeline-time">00:00</div>
+                <div className="timeline-activity">
+                  <h4>Happy Valentine's Day!</h4>
+                  <p>Celebrate the moment together 🎉</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="plan-countdown">
+              <p>Time until the plan starts:</p>
+              <div className="mini-timer">
+                <span>{String(planTime.days).padStart(2, '0')}d</span>
+                <span>{String(planTime.hours).padStart(2, '0')}h</span>
+                <span>{String(planTime.minutes).padStart(2, '0')}m</span>
+                <span>{String(planTime.seconds).padStart(2, '0')}s</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Letters Section */}
       <div className="letters-section">
@@ -189,12 +360,21 @@ export default function CountdownWithLetters({ onBack }) {
           ← Back to Landing
         </button>
       </div>
+
+      {/* Background Music */}
+      <audio 
+        ref={audioRef}
+        src="https://assets.mixkit.co/active_storage/sfx/2741/2741-preview.mp3"
+        type="audio/mpeg"
+        style={{ display: 'none' }}
+      />
+
         {/* Celebration overlay (shows when unlocked) */}
         {showCelebration && (
           <div className="celebration-overlay" onClick={() => setShowCelebration(false)}>
             <div className="celebration-message" role="dialog" aria-live="polite">
-              <h1>Happy to us, baby</h1>
-              <p className="big-love">I love you a looottttt, a lottttt 💖</p>
+              <h1>Happy to us baby💖</h1>
+              <p className="big-love">Nheeeeeeeeeebk barcha barcha ya 3asltii 💖💖💖</p>
               <div className="celebration-hearts">
                 {Array.from({ length: 8 }).map((_, i) => (
                   <span key={i} className={`heart h${i % 4}`}>❤</span>

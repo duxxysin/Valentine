@@ -31,6 +31,13 @@ function App() {
   }, [yesClicked])
 
   useEffect(() => {
+    // If YES was clicked before, go straight to countdown
+    const savedYes = localStorage.getItem('valentine_yes') === '1'
+    if (savedYes) {
+      setPage('countdown')
+      return
+    }
+    
     // If today is Feb 14, go straight to countdown+letters
     const now = new Date()
     if (now.getMonth() === 1 && now.getDate() === 14) {
