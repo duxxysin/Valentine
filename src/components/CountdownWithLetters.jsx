@@ -6,6 +6,14 @@ import valentineVideo from '../assets/Valentine.mp4'
 
 function getTimeUntilValentine() {
   const now = new Date()
+  const currentMonth = now.getMonth()
+  const currentDay = now.getDate()
+  
+  // If we're on Feb 14, show 00:00:00
+  if (currentMonth === 1 && currentDay === 14) {
+    return { days: 0, hours: 0, minutes: 0, seconds: 0, diff: 0 }
+  }
+  
   let year = now.getFullYear()
   const valentine = new Date(year, 1, 14, 0, 0, 0)
   if (now > valentine) valentine.setFullYear(year + 1)
@@ -32,7 +40,7 @@ function getTimeUntilPlanEnd() {
 
 function isPlanAvailable() {
   const now = new Date()
-  const planAvailableTime = new Date(now.getFullYear(), 1, 14, 10, 0, 0) // Feb 14 10:00 AM
+  const planAvailableTime = new Date(now.getFullYear(), 1, 14, 5, 0, 0) // Feb 14 5:00 AM
   return now >= planAvailableTime
 }
 
@@ -49,6 +57,9 @@ export default function CountdownWithLetters({ onBack }) {
   const audioRef = React.useRef(null)
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const forcePlan = params.get('forcePlan') === 'true' || params.get('forcePlan') === '1'
+    
     const id = setInterval(() => {
       const t = getTimeUntilValentine()
       setTime(t)
@@ -57,7 +68,9 @@ export default function CountdownWithLetters({ onBack }) {
         setUnlocked(true)
         clearInterval(id)
       }
-      setPlanAvailable(isPlanAvailable())
+      if (!forcePlan) {
+        setPlanAvailable(isPlanAvailable())
+      }
     }, 1000)
     return () => clearInterval(id)
   }, [])
@@ -104,9 +117,14 @@ export default function CountdownWithLetters({ onBack }) {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const force = params.get('forceUnlock') === 'true' || params.get('forceUnlock') === '1'
+    const forcePlan = params.get('forcePlan') === 'true' || params.get('forcePlan') === '1'
+    
     if (force) {
       setUnlocked(true)
-      return
+    }
+    
+    if (forcePlan) {
+      setPlanAvailable(true)
     }
 
     const now = new Date()
@@ -153,7 +171,7 @@ export default function CountdownWithLetters({ onBack }) {
     else if (t.days === 3) setMessage('Only 3 days left until the magic 💖')
     else if (t.days === 1) setMessage("Tomorrow is the day! 💕")
     else if (t.days === 0 && t.hours > 0) setMessage(`${t.hours} hour${t.hours > 1 ? 's' : ''} left… get ready!`)
-    else if (t.days === 0) setMessage('✨ HAPPY VALENTINE\'S DAY ✨\n❤️ Happy Anniversary ❤️')
+    else if (t.days === 0 && t.hours === 0 && t.minutes === 0) setMessage('You will enjoy it 💖✨')
     else setMessage('Counting down…')
   }
 
@@ -167,17 +185,38 @@ export default function CountdownWithLetters({ onBack }) {
 
   return (
     <section className="page countdown-with-letters">
-      {/* Movie Night Teaser Section */}
-      <div className="movie-night-teaser">
-        <div className="teaser-poster">
-          <img src={movieNightPoster} alt="Movie Night Cooldown" className="poster-img" />
-          <div className="teaser-overlay">
-            <h2>Join us for Movie Night! 🎬</h2>
-            <p className="teaser-date">13 February | 9:30 PM</p>
-            <p className="teaser-location">Discord - Kuromi lovers St, Maryland</p>
-          </div>
+      {/* Posts Section - Anniversary & Valentine (show only after countdown ends) */}
+      {unlocked && (
+      <div className="posts-section">
+        <div className="post-image-card post-left">
+          <img src={anniversaryImg} alt="Happy Anniversary" className="post-img" />
+        </div>
+
+        <div className="post-video-card post-right">
+          <video 
+            src={valentineVideo} 
+            alt="Happy Valentine's Day" 
+            className="post-video"
+            controls
+            autoPlay
+            loop
+            muted
+          />
         </div>
       </div>
+      )}
+
+      {/* Plan Button (show from Feb 14 5:00 AM) */}
+      {unlocked && planAvailable && (
+      <div className="plan-section">
+        <button className="btn primary plan-btn" onClick={() => setShowPlanModal(true)}>
+          ✨ Our Plan – February 14 ✨
+        </button>
+        <a href="https://discord.gg/bdCPbcPR" target="_blank" rel="noopener noreferrer" className="btn primary discord-btn">
+          💜 Join Our Discord Server 💜
+        </a>
+      </div>
+      )}
 
       {/* Countdown Section */}
       <div className="countdown-section">
@@ -206,36 +245,6 @@ export default function CountdownWithLetters({ onBack }) {
         <div className="fun-message">{message}</div>
       </div>
 
-      {/* Posts Section - Anniversary & Valentine (show only after countdown ends) */}
-      {unlocked && (
-      <div className="posts-section">
-        <div className="post-image-card post-left">
-          <img src={anniversaryImg} alt="Happy Anniversary" className="post-img" />
-        </div>
-
-        <div className="post-video-card post-right">
-          <video 
-            src={valentineVideo} 
-            alt="Happy Valentine's Day" 
-            className="post-video"
-            controls
-            autoPlay
-            loop
-            muted
-          />
-        </div>
-      </div>
-      )}
-
-      {/* Plan Button (show only after Feb 14 10:00 AM) */}
-      {unlocked && planAvailable && (
-      <div className="plan-section">
-        <button className="btn primary plan-btn" onClick={() => setShowPlanModal(true)}>
-          ✨ Our Plan – February 14 ✨
-        </button>
-      </div>
-      )}
-
       {showPlanModal && (
         <div className="plan-modal-overlay" onClick={() => setShowPlanModal(false)}>
           <div className="plan-modal" onClick={e => e.stopPropagation()}>
@@ -254,35 +263,27 @@ export default function CountdownWithLetters({ onBack }) {
               </div>
 
               <div className="timeline-item">
-                <div className="timeline-time">18:00</div>
+                <div className="timeline-time">17:30</div>
                 <div className="timeline-activity">
-                  <h4>Dinner</h4>
-                  <p>Share a beautiful dinner together 🍽️</p>
+                  <h4>Puzzle Game</h4>
+                  <p>we will play "we were here" Game</p>
                 </div>
               </div>
 
               <div className="timeline-item">
-                <div className="timeline-time">20:00</div>
+                <div className="timeline-time">21:00</div>
+                <div className="timeline-activity">
+                  <h4>MiniGames</h4>
+                  <p>we will get alot of choices</p>
+                </div>
+              </div>
+
+              <div className="timeline-item">
+                <div className="timeline-time">23:00</div>
                 <div className="timeline-activity">
                   <h4>Movie & Relaxation</h4>
-                  <p>Watch your favorite movie or just talk 🎬</p>
-                </div>
-              </div>
-
-              <div className="timeline-item">
-                <div className="timeline-time">22:00</div>
-                <div className="timeline-activity">
-                  <h4>Stargazing & Cuddles</h4>
-                  <p>Enjoy the night sky together ✨</p>
-                </div>
-              </div>
-
-              <div className="timeline-item">
-                <div className="timeline-time">00:00</div>
-                <div className="timeline-activity">
-                  <h4>Happy Valentine's Day!</h4>
-                  <p>Celebrate the moment together 🎉</p>
-                </div>
+                  <p>we will watch a movie & relax </p>
+                </div> 
               </div>
             </div>
 

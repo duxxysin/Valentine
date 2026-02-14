@@ -17,7 +17,7 @@ body{
   min-height:100vh;
   overflow: auto; /* allow scrolling for long pages (letters below countdown) */
 }
-# (removed stray brace)
+
 #app-root{
   position:relative;
   z-index:10;
@@ -951,6 +951,9 @@ body{
 .plan-section {
   width: 100%;
   display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
   justify-content: center;
   margin: 2.5rem auto 1rem;
 }
@@ -966,11 +969,33 @@ body{
   cursor: pointer;
   transition: all 0.35s ease;
   box-shadow: 0 10px 30px rgba(255, 105, 180, 0.35);
+  text-decoration: none;
+  display: inline-block;
 }
 
 .plan-btn:hover {
   transform: translateY(-4px) scale(1.05);
   box-shadow: 0 16px 45px rgba(255, 105, 180, 0.5);
+}
+
+.discord-btn {
+  font-family: 'Dancing Script', cursive;
+  font-size: 1.3rem;
+  padding: 1rem 2.5rem;
+  background: linear-gradient(135deg, #7c3aed, #a855f7);
+  border: none;
+  border-radius: 12px;
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.35s ease;
+  box-shadow: 0 10px 30px rgba(168, 85, 247, 0.35);
+  text-decoration: none;
+  display: inline-block;
+}
+
+.discord-btn:hover {
+  transform: translateY(-4px) scale(1.05);
+  box-shadow: 0 16px 45px rgba(168, 85, 247, 0.5);
 }
 
 /* Plan Modal */
