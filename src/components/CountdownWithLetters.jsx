@@ -49,11 +49,13 @@ export default function CountdownWithLetters({ onBack }) {
   const [planTime, setPlanTime] = useState(getTimeUntilPlanEnd())
   const [message, setMessage] = useState('')
   const [opened, setOpened] = useState([false, false])
-  const [unlocked, setUnlocked] = useState(false)
+  // Always show posts/letters
+  const [unlocked, setUnlocked] = useState(true)
   const [showCelebration, setShowCelebration] = useState(false)
   const [fireworks, setFireworks] = useState([])
   const [showPlanModal, setShowPlanModal] = useState(false)
-  const [planAvailable, setPlanAvailable] = useState(() => isPlanAvailable())
+  // Always make the plan available
+  const [planAvailable, setPlanAvailable] = useState(true)
   const audioRef = React.useRef(null)
 
   useEffect(() => {
@@ -68,9 +70,7 @@ export default function CountdownWithLetters({ onBack }) {
         setUnlocked(true)
         clearInterval(id)
       }
-      if (!forcePlan) {
-        setPlanAvailable(isPlanAvailable())
-      }
+      // keep planAvailable true by default
     }, 1000)
     return () => clearInterval(id)
   }, [])
@@ -119,16 +119,8 @@ export default function CountdownWithLetters({ onBack }) {
     const force = params.get('forceUnlock') === 'true' || params.get('forceUnlock') === '1'
     const forcePlan = params.get('forcePlan') === 'true' || params.get('forcePlan') === '1'
     
-    if (force) {
-      setUnlocked(true)
-    }
-    
-    if (forcePlan) {
-      setPlanAvailable(true)
-    }
-
-    const now = new Date()
-    if (now.getMonth() === 1 && now.getDate() === 14) setUnlocked(true)
+    if (force) setUnlocked(true)
+    if (forcePlan) setPlanAvailable(true)
   }, [])
 
   useEffect(() => {
@@ -176,10 +168,7 @@ export default function CountdownWithLetters({ onBack }) {
   }
 
   function toggleLetter(index) {
-    if (!unlocked) {
-      alert('💌 Letters unlock on February 14')
-      return
-    }
+    // letters are always available
     setOpened(prev => prev.map((v, i) => (i === index ? !v : v)))
   }
 
